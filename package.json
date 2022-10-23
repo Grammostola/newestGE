@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "chalk": "^5.1.2",
+    "ora": "^6.1.2",
+    "tar": "^6.1.11"
+  },
+  "type": "module",
+  "devDependencies": {
+    "standard": "^17.0.0"
+  }
+}
