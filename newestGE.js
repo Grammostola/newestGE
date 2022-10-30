@@ -23,10 +23,14 @@ getLatestProtonGE().then(releaseName => {
  */
 async function getLatestProtonGE () {
   const steamFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
+  const steamPresent = await getExists(steamFolder)
+  if (!(steamPresent)) {
+    throw new Error(`A Steam folder was not found at the predicted location: ${steamFolder} and the script will halt.`)
+  }
   const fileInfoObj = await getTarDetails()
   const releaseName = fileInfoObj.filename.slice(0, fileInfoObj.filename.indexOf('.tar.gz'))
-  const alreadyPresent = await getAlreadyPresent(releaseName)
-  if (alreadyPresent) {
+  const releasePresent = await getExists(path.join(steamFolder, releaseName))
+  if (releasePresent) {
     console.log(warningColor(`${releaseName} already appears in ${steamFolder}, exiting.`))
     process.exit(0)
   }
@@ -62,9 +66,9 @@ async function getLatestProtonGE () {
     }
   }
 
-  async function getAlreadyPresent (release) {
+  async function getExists (location) {
     try {
-      await fsPromise.access(path.join(steamFolder, release))
+      await fsPromise.access(location)
       return true
     } catch (error) {
       return false
