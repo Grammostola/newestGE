@@ -37,16 +37,16 @@ async function getLatestProtonGE () { // todo: check for .steam/root, if not pre
   }
   const fileInfoObj = await getTarDetails()
   const releaseName = fileInfoObj.filename.slice(0, fileInfoObj.filename.indexOf('.tar.gz'))
-  const releasePresent = await getExists(path.join(steamFolder, releaseName))
+  const releasePresent = await getExists(path.join(compatibilitytoolsFolder, releaseName))
   if (releasePresent) {
-    console.log(warningColor(`${releaseName} already appears in ${steamFolder}, exiting.`))
+    console.log(warningColor(`${releaseName} already appears in ${compatibilitytoolsFolder}, exiting.`))
     process.exit(0)
   }
   const downloadSpinner = ora(createOraOptionsObject('Downloading the latest release')).start()
   await downloadTar(fileInfoObj)
   downloadSpinner.stop()
   const unTarSpinner = ora(createOraOptionsObject('Unpacking into the relevant Steam folder')).start()
-  await unTarToSteam(fileInfoObj, steamFolder)
+  await unTarToSteam(fileInfoObj, compatibilitytoolsFolder)
   unTarSpinner.stop()
   return releaseName
 
@@ -89,10 +89,10 @@ async function getLatestProtonGE () { // todo: check for .steam/root, if not pre
     return pipeline(downloadReply.body, fs.createWriteStream(filename))
   }
 
-  async function unTarToSteam ({ filename }, steamFolder) {
+  async function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
     return await tar.x({
       file: filename,
-      C: steamFolder
+      C: compatibilitytoolsFolder
     })
   }
 }
