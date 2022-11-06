@@ -8,7 +8,7 @@ import chalk from 'chalk'
 import ora from 'ora'
 
 const errorColor = chalk.bold.red
-const warningColor = chalk.hex('#FFA500')
+const infoColor = chalk.hex('#b19cd19')
 const okColor = chalk.bold.blue
 
 getLatestProtonGE().then(releaseName => {
@@ -19,9 +19,10 @@ getLatestProtonGE().then(releaseName => {
 
 /**
  * Check if the latest release of Proton-GE is installed for the current user's Steam,
- * if so exit and inform, else download and install
+ * if so exit and inform, else download and install.
+ * Verify that the relevant Steam folder is present and create the necessary subfolder if necessary.
  */
-async function getLatestProtonGE () { // todo: check for .steam/root, if not present abort, if present check for compatibilitytools.d and create if not present
+async function getLatestProtonGE () {
   const steamFolder = `${homedir()}/.steam/root/`
   const steamPresent = await getExists(steamFolder)
   if (!(steamPresent)) {
@@ -30,16 +31,14 @@ async function getLatestProtonGE () { // todo: check for .steam/root, if not pre
   const compatibilitytoolsFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
   const compatFolderPresent = await getExists(compatibilitytoolsFolder)
   if (!(compatFolderPresent)) {
-    // inform and attempt to create the folder
-    // read write execute, read execute, execute just like user-created folder under homefolder
-    console.log(warningColor(`${compatibilitytoolsFolder} was not found and has been created.`))
-    await fsPromise.mkdir(compatibilitytoolsFolder, 751)
+    console.log(infoColor(`${compatibilitytoolsFolder} was not found and has been created.`))
+    await fsPromise.mkdir(compatibilitytoolsFolder, '0751')
   }
   const fileInfoObj = await getTarDetails()
   const releaseName = fileInfoObj.filename.slice(0, fileInfoObj.filename.indexOf('.tar.gz'))
   const releasePresent = await getExists(path.join(compatibilitytoolsFolder, releaseName))
   if (releasePresent) {
-    console.log(warningColor(`${releaseName} already appears in ${compatibilitytoolsFolder}, exiting.`))
+    console.log(infoColor(`${releaseName} appears the newest and already appears in ${compatibilitytoolsFolder}, exiting.`))
     process.exit(0)
   }
   const downloadSpinner = ora(createOraOptionsObject('Downloading the latest release')).start()
