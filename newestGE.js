@@ -21,11 +21,19 @@ getLatestProtonGE().then(releaseName => {
  * Check if the latest release of Proton-GE is installed for the current user's Steam,
  * if so exit and inform, else download and install
  */
-async function getLatestProtonGE () {
-  const steamFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
+async function getLatestProtonGE () { // todo: check for .steam/root, if not present abort, if present check for compatibilitytools.d and create if not present
+  const steamFolder = `${homedir()}/.steam/root/`
   const steamPresent = await getExists(steamFolder)
   if (!(steamPresent)) {
     throw new Error(`A Steam folder was not found at the predicted location: ${steamFolder} and the script will halt.`)
+  }
+  const compatibilitytoolsFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
+  const compatFolderPresent = await getExists(compatibilitytoolsFolder)
+  if (!(compatFolderPresent)) {
+    // inform and attempt to create the folder
+    // read write execute, read execute, execute just like user-created folder under homefolder
+    console.log(warningColor(`${compatibilitytoolsFolder} was not found and has been created.`))
+    await fsPromise.mkdir(compatibilitytoolsFolder, 751)
   }
   const fileInfoObj = await getTarDetails()
   const releaseName = fileInfoObj.filename.slice(0, fileInfoObj.filename.indexOf('.tar.gz'))
