@@ -8,7 +8,7 @@ import chalk from 'chalk'
 import ora from 'ora'
 
 const errorColor = chalk.bold.red
-const warningColor = chalk.hex('#FFA500')
+const infoColor = chalk.hex('#b19cd19')
 const okColor = chalk.bold.blue
 
 getLatestProtonGE().then(releaseName => {
@@ -19,26 +19,33 @@ getLatestProtonGE().then(releaseName => {
 
 /**
  * Check if the latest release of Proton-GE is installed for the current user's Steam,
- * if so exit and inform, else download and install
+ * if so exit and inform, else download and install.
+ * Verify that the relevant Steam folder is present and create the necessary subfolder if necessary.
  */
 async function getLatestProtonGE () {
-  const steamFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
+  const steamFolder = `${homedir()}/.steam/root/`
   const steamPresent = await getExists(steamFolder)
   if (!(steamPresent)) {
     throw new Error(`A Steam folder was not found at the predicted location: ${steamFolder} and the script will halt.`)
   }
+  const compatibilitytoolsFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
+  const compatFolderPresent = await getExists(compatibilitytoolsFolder)
+  if (!(compatFolderPresent)) {
+    console.log(infoColor(`${compatibilitytoolsFolder} was not found and has been created.`))
+    await fsPromise.mkdir(compatibilitytoolsFolder, '0751')
+  }
   const fileInfoObj = await getTarDetails()
   const releaseName = fileInfoObj.filename.slice(0, fileInfoObj.filename.indexOf('.tar.gz'))
-  const releasePresent = await getExists(path.join(steamFolder, releaseName))
+  const releasePresent = await getExists(path.join(compatibilitytoolsFolder, releaseName))
   if (releasePresent) {
-    console.log(warningColor(`${releaseName} already appears in ${steamFolder}, exiting.`))
+    console.log(infoColor(`${releaseName} appears the newest and already appears in ${compatibilitytoolsFolder}, exiting.`))
     process.exit(0)
   }
   const downloadSpinner = ora(createOraOptionsObject('Downloading the latest release')).start()
   await downloadTar(fileInfoObj)
   downloadSpinner.stop()
   const unTarSpinner = ora(createOraOptionsObject('Unpacking into the relevant Steam folder')).start()
-  await unTarToSteam(fileInfoObj, steamFolder)
+  await unTarToSteam(fileInfoObj, compatibilitytoolsFolder)
   unTarSpinner.stop()
   return releaseName
 
@@ -81,10 +88,10 @@ async function getLatestProtonGE () {
     return pipeline(downloadReply.body, fs.createWriteStream(filename))
   }
 
-  async function unTarToSteam ({ filename }, steamFolder) {
+  async function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
     return await tar.x({
       file: filename,
-      C: steamFolder
+      C: compatibilitytoolsFolder
     })
   }
 }
