@@ -47,6 +47,10 @@ async function getLatestProtonGE () {
   const unTarSpinner = ora(createOraOptionsObject('Unpacking into the relevant Steam folder')).start()
   await unTarToSteam(fileInfoObj, compatibilitytoolsFolder)
   unTarSpinner.stop()
+  const deleteSpinner = ora(createOraOptionsObject('Deleting the downloaded archive file')).start()
+  await deleteDownloaded(fileInfoObj)
+  deleteSpinner.stop()
+
   return releaseName
 
   function createOraOptionsObject (text) {
@@ -93,5 +97,9 @@ async function getLatestProtonGE () {
       file: filename,
       C: compatibilitytoolsFolder
     })
+  }
+
+  async function deleteDownloaded ({ filename }) {
+    return fsPromise.unlink(filename)
   }
 }
