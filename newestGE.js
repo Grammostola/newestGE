@@ -5,7 +5,7 @@ import tar from 'tar'
 import { homedir } from 'os'
 import path from 'path'
 import chalk from 'chalk'
-import ora from 'ora'
+import { oraPromise } from 'ora'
 
 const errorColor = chalk.bold.red
 const infoColor = chalk.hex('#b19cd19')
@@ -41,25 +41,29 @@ async function getLatestProtonGE () {
     console.log(infoColor(`${releaseName} appears the newest and already appears in ${compatibilitytoolsFolder}, exiting.`))
     process.exit(0)
   }
-  const downloadSpinner = ora(createOraOptionsObject('Downloading the latest release')).start()
-  await downloadTar(fileInfoObj)
-  downloadSpinner.stop()
-  const unTarSpinner = ora(createOraOptionsObject('Unpacking into the relevant Steam folder')).start()
-  await unTarToSteam(fileInfoObj, compatibilitytoolsFolder)
-  unTarSpinner.stop()
-  const deleteSpinner = ora(createOraOptionsObject('Deleting the downloaded archive file')).start()
-  await deleteDownloaded(fileInfoObj)
-  deleteSpinner.stop()
+
+  await oraPromise(downloadTar(fileInfoObj), {
+    spinner: 'dots3',
+    color: 'blue',
+    failText: 'An error happened when downloading the latest release',
+    text: 'Downloading the latest release'
+  })
+
+  await oraPromise(unTarToSteam(fileInfoObj, compatibilitytoolsFolder), {
+    spinner: 'dots4',
+    color: 'blue',
+    failText: 'An error occured during archive extraction to Steam folder',
+    text: 'Extracting archive into the relevant Steam folder'
+  })
+
+  await oraPromise(deleteDownloaded(fileInfoObj), {
+    spinner: 'dots5',
+    color: 'blue',
+    failText: 'A problem occurred while attempting to delete the downloaded archive file',
+    text: 'Deleting the downloaded archive file'
+  })
 
   return releaseName
-
-  function createOraOptionsObject (text) {
-    return {
-      text,
-      spinner: 'dots5',
-      color: 'blue'
-    }
-  }
 
   async function getTarDetails () {
     const releaseReply = await fetch('https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest')
