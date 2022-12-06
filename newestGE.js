@@ -118,14 +118,14 @@ async function getLatestProtonGE (deleteEarlier) {
     return pipeline(downloadReply.body, fs.createWriteStream(filename))
   }
 
-  async function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
+  function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
     return tar.x({
       file: filename,
       C: compatibilitytoolsFolder
     })
   }
 
-  async function deleteProtonGE ({ filename, isDirectory }) {
+  function deleteProtonGE ({ filename, isDirectory }) {
     if (isDirectory) return fsPromise.rm(filename, { recursive: true })
     return fsPromise.unlink(filename)
   }
