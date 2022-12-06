@@ -1,17 +1,29 @@
 import fs from 'fs'
 import fsPromise from 'fs/promises'
-import { pipeline } from 'stream/promises'
 import tar from 'tar'
+import { pipeline } from 'stream/promises'
 import { homedir } from 'os'
+import { oraPromise } from 'ora'
 import path from 'path'
 import chalk from 'chalk'
-import { oraPromise } from 'ora'
+import yargs from 'yargs'
+import globPromise from 'fast-glob'
 
 const errorColor = chalk.bold.red
 const infoColor = chalk.hex('#b19cd19')
 const okColor = chalk.bold.blue
 
-getLatestProtonGE().then(releaseName => {
+const argv = yargs(process.argv.slice(2))
+  .option('delete-earlier', {
+    demand: false,
+    default: false,
+    type: 'boolean',
+    describe: 'Delete installed earlier Proton-GE versions'
+  }
+  ).strictOptions()
+  .argv
+
+getLatestProtonGE(argv.deleteEarlier).then(releaseName => {
   console.log(okColor(`${releaseName} was installed, please (re)start Steam.`))
 }, error => {
   console.log(errorColor(error))
@@ -21,8 +33,9 @@ getLatestProtonGE().then(releaseName => {
  * Check if the latest release of Proton-GE is installed for the current user's Steam,
  * if so exit and inform, else download and install.
  * Verify that the relevant Steam folder is present and create the necessary subfolder if necessary.
+ * Optionally delete previous versions of Proton-GE already installed.
  */
-async function getLatestProtonGE () {
+async function getLatestProtonGE (deleteEarlier) {
   const steamFolder = `${homedir()}/.steam/root/`
   const steamPresent = await getExists(steamFolder)
   if (!(steamPresent)) {
@@ -42,6 +55,15 @@ async function getLatestProtonGE () {
     process.exit(0)
   }
 
+  if (deleteEarlier === true) {
+    await oraPromise(deleteEarlierProtonGEs(), {
+      spinner: 'noise',
+      color: 'yellow',
+      failText: 'There was a problem while attempting to delete installed earlier ProtonGE versions',
+      text: 'Deleting installed earlier ProtonGE versions if present'
+    })
+  }
+
   await oraPromise(downloadTar(fileInfoObj), {
     spinner: 'dots3',
     color: 'blue',
@@ -56,7 +78,7 @@ async function getLatestProtonGE () {
     text: 'Extracting archive into the relevant Steam folder'
   })
 
-  await oraPromise(deleteDownloaded(fileInfoObj), {
+  await oraPromise(deleteProtonGE(fileInfoObj), {
     spinner: 'dots5',
     color: 'blue',
     failText: 'A problem occurred while attempting to delete the downloaded archive file',
@@ -97,13 +119,21 @@ async function getLatestProtonGE () {
   }
 
   async function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
-    return await tar.x({
+    return tar.x({
       file: filename,
       C: compatibilitytoolsFolder
     })
   }
 
-  async function deleteDownloaded ({ filename }) {
+  async function deleteProtonGE ({ filename, isDirectory }) {
+    if (isDirectory) return fsPromise.rm(filename, { recursive: true })
     return fsPromise.unlink(filename)
+  }
+
+  async function deleteEarlierProtonGEs () {
+    const earliers = await globPromise(`${compatibilitytoolsFolder}/GE-Proton*`, {
+      onlyDirectories: true
+    })
+    return Promise.all(earliers.map(earlier => deleteProtonGE({ filename: earlier, isDirectory: true })))
   }
 }
