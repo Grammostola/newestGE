@@ -56,10 +56,12 @@ async function getLatestProtonGE (deleteEarlier) {
   }
 
   if (deleteEarlier === true) {
-    const earliers = await globPromise(`${compatibilitytoolsFolder}/GE-Proton*`, {
-      onlyDirectories: true
+    await oraPromise(deleteEarlierProtonGEs(), {
+      spinner: 'noise',
+      color: 'yellow',
+      failText: 'There was a problem while attempting to delete installed earlier ProtonGE versions',
+      text: 'Deleting installed earlier ProtonGE versions if present'
     })
-    Promise.all(earliers.map(earlier => deleteProtonGE({ filename: earlier, isDirectory: true })))
   }
 
   await oraPromise(downloadTar(fileInfoObj), {
@@ -117,7 +119,7 @@ async function getLatestProtonGE (deleteEarlier) {
   }
 
   async function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
-    return await tar.x({
+    return tar.x({
       file: filename,
       C: compatibilitytoolsFolder
     })
@@ -126,5 +128,12 @@ async function getLatestProtonGE (deleteEarlier) {
   async function deleteProtonGE ({ filename, isDirectory }) {
     if (isDirectory) return fsPromise.rm(filename, { recursive: true })
     return fsPromise.unlink(filename)
+  }
+
+  async function deleteEarlierProtonGEs () {
+    const earliers = await globPromise(`${compatibilitytoolsFolder}/GE-Proton*`, {
+      onlyDirectories: true
+    })
+    return Promise.all(earliers.map(earlier => deleteProtonGE({ filename: earlier, isDirectory: true })))
   }
 }
