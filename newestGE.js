@@ -55,6 +55,13 @@ async function getLatestProtonGE (deleteEarlier) {
     process.exit(0)
   }
 
+  await oraPromise(downloadTar(fileInfoObj), {
+    spinner: 'dots3',
+    color: 'blue',
+    failText: 'An error happened when downloading the latest release',
+    text: 'Downloading the latest release'
+  })
+
   if (deleteEarlier === true) {
     await oraPromise(deleteEarlierProtonGEs(), {
       spinner: 'noise',
@@ -63,13 +70,6 @@ async function getLatestProtonGE (deleteEarlier) {
       text: 'Deleting installed earlier ProtonGE versions if present'
     })
   }
-
-  await oraPromise(downloadTar(fileInfoObj), {
-    spinner: 'dots3',
-    color: 'blue',
-    failText: 'An error happened when downloading the latest release',
-    text: 'Downloading the latest release'
-  })
 
   await oraPromise(unTarToSteam(fileInfoObj, compatibilitytoolsFolder), {
     spinner: 'dots4',
