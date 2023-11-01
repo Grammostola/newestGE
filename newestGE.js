@@ -1,13 +1,12 @@
-import fs from 'fs'
 import fsPromise from 'fs/promises'
 import tar from 'tar'
-import { pipeline } from 'stream/promises'
 import { homedir } from 'os'
 import { oraPromise } from 'ora'
 import path from 'path'
 import chalk from 'chalk'
 import yargs from 'yargs'
 import globPromise from 'fast-glob'
+import prog from 'cli-progress'
 
 const errorColor = chalk.bold.red
 const infoColor = chalk.hex('#b19cd19')
@@ -55,12 +54,7 @@ async function getLatestProtonGE (deleteEarlier) {
     process.exit(0)
   }
 
-  await oraPromise(downloadTar(fileInfoObj), {
-    spinner: 'dots3',
-    color: 'blue',
-    failText: 'An error happened when downloading the latest release',
-    text: 'Downloading the latest release'
-  })
+  await downloadTar(fileInfoObj)
 
   if (deleteEarlier === true) {
     await oraPromise(deleteEarlierProtonGEs(), {
@@ -115,7 +109,28 @@ async function getLatestProtonGE (deleteEarlier) {
   async function downloadTar ({ url, filename }) {
     const downloadReply = await fetch(url)
     if (!downloadReply.ok) throw new Error(`Unexpected fetch response: ${downloadReply.statusText}`)
-    return pipeline(downloadReply.body, fs.createWriteStream(filename))
+
+    const dLoadBar = new prog.SingleBar({
+      format: ' {bar} {percentage}%',
+      barCompleteChar: '\u25A0',
+      barIncompleteChar: ' '
+    })
+
+    const contentLength = +downloadReply.headers.get('content-length')
+
+    let receivedLength = 0
+    const parts = []
+    console.log('Downloading the latest release..')
+    dLoadBar.start(contentLength / 100, 0)
+
+    for await (const part of downloadReply.body) {
+      parts.push(part)
+      receivedLength += part.length
+      dLoadBar.update(receivedLength / 100)
+    }
+    dLoadBar.stop()
+
+    return fsPromise.writeFile(filename, parts)
   }
 
   function unTarToSteam ({ filename }, compatibilitytoolsFolder) {
