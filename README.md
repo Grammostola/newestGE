@@ -4,7 +4,7 @@ newestGE is a small nodejs script for downloading the latest release of [Proton-
 (It does the same thing as the Installation - Manual - Native instructions on the page referenced above. I was doing it manually again and thought about automating it via Github's API. I also learnt something about streams and pipes. It's here because someone else might find it useful or offer useful advice on how to make it better.)
 
 ### Prerequisites
-- The new native-to-nodejs fetch is employed so a newer version of node than v16 is required. Tested with v18.11.0 and v19.0.0. There may be a warning about the Fetch API being an experimental feature. v18 LTS works well. 
+- Node 20.x LTS works without warnings about native fetch being experimental
 - The native version of Steam rather than the flatpak version, the latter has another way of installing/updating Proton-GE, see 
 [Proton-GE](https://github.com/GloriousEggroll/proton-ge-custom#flatpak)
 
@@ -21,6 +21,16 @@ To run:
 `node newestGE.js`
 
 (optionally `node newestGE.js --delete-earlier` to delete prior versions of Proton-GE already installed. Defaults to false)
+
+```
+node newestGE.js --delete-earlier
+Downloading the latest release..
+ ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ 100%
+✔ Deleting installed earlier ProtonGE versions if present
+✔ Extracting archive into the relevant Steam folder
+✔ Deleting the downloaded archive file
+GE-Proton8-22 was installed, please (re)start Steam.
+```
 
 ### Contributions
 Feel free to create an issue or a PR based on an issue.
