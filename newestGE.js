@@ -19,6 +19,13 @@ const argv = yargs(process.argv.slice(2))
     type: 'boolean',
     describe: 'Delete installed earlier Proton-GE versions'
   }
+  )
+  .option('flatpak', {
+    demand: false,
+    default: false,
+    type: 'boolean',
+    describe: 'Install for flatpak version of Steam'
+  }
   ).strictOptions()
   .argv
 
@@ -35,12 +42,12 @@ getLatestProtonGE(argv.deleteEarlier).then(releaseName => {
  * Optionally delete previous versions of Proton-GE already installed.
  */
 async function getLatestProtonGE (deleteEarlier) {
-  const steamFolder = `${homedir()}/.steam/root/`
+  const steamFolder = argv.flatpak ? `${homedir()}/.var/app/com.valvesoftware.Steam/data/Steam` : `${homedir()}/.steam/root`
   const steamPresent = await getExists(steamFolder)
   if (!(steamPresent)) {
     throw new Error(`A Steam folder was not found at the predicted location: ${steamFolder} and the script will halt.`)
   }
-  const compatibilitytoolsFolder = `${homedir()}/.steam/root/compatibilitytools.d/`
+  const compatibilitytoolsFolder = `${steamFolder}/compatibilitytools.d`
   const compatFolderPresent = await getExists(compatibilitytoolsFolder)
   if (!(compatFolderPresent)) {
     console.log(infoColor(`${compatibilitytoolsFolder} was not found and has been created.`))
