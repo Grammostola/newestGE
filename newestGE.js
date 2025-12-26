@@ -1,5 +1,5 @@
 import fsPromise from 'fs/promises'
-import tar from 'tar'
+import * as tar from 'tar'
 import { homedir } from 'os'
 import { oraPromise } from 'ora'
 import path from 'path'
