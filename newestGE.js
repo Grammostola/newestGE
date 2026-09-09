@@ -1,6 +1,6 @@
 import fsPromise from 'fs/promises'
 import * as tar from 'tar'
-import { homedir } from 'os'
+import { homedir, arch } from 'os'
 import { oraPromise } from 'ora'
 import path from 'path'
 import chalk from 'chalk'
@@ -92,7 +92,8 @@ async function getLatestProtonGE (deleteEarlier) {
     const releaseReply = await fetch('https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest')
     if (!releaseReply.ok) throw new Error(`Unexpected fetch response: ${releaseReply.statusText}`)
     const release = await releaseReply.json()
-    const assetDescriptor = release.assets.find(asset => asset.name.endsWith('.tar.gz'))
+    const archString = arch() === 'x64' ? 'x86_64' : 'aarch64' // assume 'arm64' if not x64 because only other currently arch available
+    const assetDescriptor = release.assets.find(asset => asset.name.endsWith(`${archString}.tar.gz`))
     const filename = assetDescriptor.name
     const assetUrl = assetDescriptor.url
 
